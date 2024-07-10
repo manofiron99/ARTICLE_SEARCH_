@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css">
+    <!-- Add the SheetJS library -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <title>Citation Format Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            /* margin: 20px; */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        select {
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .main {
+            padding-top: 2vw;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand " href="#"><i class="fa-sharp fa-regular fa-newspaper"></i> RMS</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class=" collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link " href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="citation.html">Citation</a></li>
+                </ul>
+            </div>
+            <!-- Move the toggle theme button to the right -->
+            <form class="d-flex ms-auto" role="search">
+                <button id="themeToggle" class="btn btn-dark"><i class='bx bx-sun'></i>/<i
+                        class='bx bx-moon'></i></button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- PDF upload form -->
+    <div class="container main">
+        <!-- Metadata form -->
+        <form>
+            <div class="mb-3">
+                <label for="title" class="form-label">
+                    <h5>Title:</h5>
+                </label>
+                <input class="form-control " type="text" id="title" placeholder="Enter article title">
+            </div>
+
+            <div class="mb-3">
+                <label for="author" class="form-label">
+                    <h5>Author:</h5>
+                </label>
+                <input class="form-control" type="text" id="author" placeholder="Enter author names">
+            </div>
+
+            <div class="mb-3">
+                <label for="journal" class="form-label">
+                    <h5>Journal:</h5>
+                </label>
+                <input class="form-control" type="text" id="journal" placeholder="Enter journal name">
+            </div>
+
+            <div class="mb-3">
+                <label for="year" class="form-label">
+                    <h5>Published Date:</h5>
+                </label>
+                <input class="form-control" type="text" id="year" placeholder="Enter publication year">
+            </div>
+
+            <div class="mb-3">
+                <label for="doi" class="form-label">
+                    <h5>Doi/Url:</h5>
+                </label>
+                <input class="form-control" type="text" id="doi" placeholder="Enter DOI or URL">
+            </div>
+
+            <div class="mb-3">
+                <label for="style" class="form-label">
+                    <h5>Choose Citation Style:</h5>
+                </label>
+                <select class="form-select" id="style">
+                    <option value="ieee">IEEE</option>
+                    <option value="vancouver">Vancouver</option>
+                    <option value="apa">APA</option>
+                    <option value="bluebook">The Bluebook</option>
+                    <option value="ama">AMA</option>
+                    <option value="turabian">Turabian</option>
+                    <option value="chicago">Chicago</option>
+                    <option value="oscola">OSCOLA</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-success" onclick="convert()"><i class="fa-solid fa-pen-nib"></i>
+                Convert</button>
+        </form>
+
+        <!-- Result display -->
+        <div id="result" class="mt-4 p-5"></div>
+    </div>
+
+    <script>
+        function convertPdf() {
+            // Add logic to handle the uploaded PDF file
+            alert('PDF upload logic goes here');
+        }
+
+        function convert() {
+            var author = document.getElementById('author').value;
+            var title = document.getElementById('title').value;
+            var journal = document.getElementById('journal').value;
+            var year = document.getElementById('year').value;
+            var doi = document.getElementById('doi').value;
+            var style = document.getElementById('style').value;
+
+            var citation;
+
+            doi = doi === 'DOI not available' ? null : doi;
+            journal = journal === 'Venue not available' ? '' : journal;
+
+
+            switch (style) {
+                case 'ieee':
+                    // Split authors and format them in the required style
+                    var authorsArray = author.split(', ');
+
+                    var formattedAuthors = authorsArray.map(function (author, index) {
+                        var nameParts = author.split(' ');
+                        var lastName = nameParts.pop();
+                        var initials = (index === 0 ? nameParts.map(function (part) {
+                            return part.charAt(0);
+                        }).join('') : nameParts[0].charAt(0)) + ' ' + lastName;
+
+                        return initials;
+                    });
+
+                    // Format date as month and year
+                    var date = new Date(year);
+                    var month = date.toLocaleString('default', { month: 'long' });
+                    var formattedDate = month + ',' + date.getFullYear();
+
+                    // Construct the IEEE citation
+                    citation = '[1]' + (formattedAuthors.length > 1 ? formattedAuthors.join(', ') : formattedAuthors[0]) + ',"' + title + '", ' + '<i> ' + journal + '</i>, ' + formattedDate + '.';
+
+                    // Include DOI/URL if available
+                    if (doi) {
+                        citation += ', ' + doi;
+                    }
+                    citation += '.';
+                    break;
+
+                case 'vancouver':
+                    var authorsArray = author.split(', ');
+                    var formattedAuthors;
+
+                    // If there are more than 3 authors, display only the first 3 followed by "et al."
+                    if (authorsArray.length > 3) {
+                        var firstThreeAuthors = authorsArray.slice(0, 3).map(function (author) {
+                            var nameParts = author.split(' ');
+                            var lastName = nameParts.pop();
+                            var initials = nameParts.map(function (part) {
+                                return part.charAt(0);
+                            }).join('');
+                            return lastName + ' ' + initials;
+                        });
+                        formattedAuthors = firstThreeAuthors.join(', ') + ' et al.';
+                    } else {
+                        formattedAuthors = authorsArray.map(function (author) {
+                            var nameParts = author.split(' ');
+                            var lastName = nameParts.pop();
+                            var initials = nameParts.map(function (part) {
+                                return part.charAt(0);
+                            }).join('');
+                            return lastName + ' ' + initials;
+                        }).join(', ');
+                    }
+
+                    // Construct the Vancouver citation
+                    citation = '[1]' + formattedAuthors + '. ' + title + '. ' + journal + ' ' + year + '.';
+
+                    // Include DOI if available
+                    if (doi) {
+                        citation += ' DOI: ' + doi;
+                    }
+                    break;
+
+                case 'apa':
+                    // Extract year from the date if available
+                    const extractedYear = /(\d{4})/.exec(year);
+                    const formattedYear = extractedYear ? extractedYear[1] : '';
+
+                    // Format authors with last name first, followed by a comma, space, and first name initial with a period
+                    const formattedAuthorsAPA = author.split(', ').map(author => {
+                        const nameParts = author.split(' ');
+                        const lastName = nameParts.shift(); // Extract and remove the last name
+                        const initials = nameParts.map(part => part.charAt(0) + '.').join(' '); // Use the first character of each remaining part as initials with a period
+                        return lastName + ', ' + initials;
+                    }).join(', ');
+
+                    // Construct the APA citation
+                    citation = formattedAuthorsAPA + ' (' + formattedYear + '). ' + title + '. ' + '<i>' + journal + '</i>';
+
+                    // Include DOI/URL if available
+                    if (doi) {
+                        citation += ' DOI: ' + doi;
+                    }
+                    break;
+
+                case 'bluebook':
+                    citation = author + ', ' + '<i>' + title + '</i>, ' + journal + ' (' + year + ').';
+                    // Include DOI/URL if available
+                    if (doi) {
+                        citation += ' ' + doi;
+                    }
+                    break;
+
+                case 'ama':
+                    citation = author + '. ' + title + '. ' + '<i>' + journal + '</i>. ' + year + '.';
+                    // Include DOI/URL if available
+                    if (doi) {
+                        citation += ' ' + doi;
+                    }
+                    break;
+
+                case 'turabian':
+                    citation = author + ', ' + '<i>' + title + '</i>, ' + journal + ' (' + year + ').';
+                    // Include DOI/URL if available
+                    if (doi) {
+                        citation += ' ' + doi;
+                    }
+                    break;
+
+                case 'chicago':
+                    citation = author + ', "' + title + '," ' + '<i>' + journal + '</i> ' + '(' + year + ').';
+                    // Include DOI/URL if available
+                    if (doi) {
+                        citation += ' ' + doi;
+                    }
+                    break;
+
+                case 'oscola':
+                    citation = author + ' ' + '<i>' + title + '</i> (' + year + ') ' + journal + '.';
+                    // Include DOI/URL if available
+                    if (doi) {
+                        citation += ' ' + doi;
+                    }
+                    break;
+
+                default:
+                    citation = 'Invalid citation style selected.';
+            }
+
+            document.getElementById('result').innerHTML = '<strong>' + style.toUpperCase() + ' Citation:</strong><br>' + citation;
+        }
+
+        function readExcel() {
+            var fileInput = document.getElementById('excelFile');
+            var file = fileInput.files[0];
+
+            if (file) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    var data = new Uint8Array(e.target.result);
+                    var workbook = XLSX.read(data, { type: 'array' });
+
+                    // Assuming the first sheet is the one you want to extract data from
+                    var sheetName = workbook.SheetNames[0];
+                    var sheet = workbook.Sheets[sheetName];
+
+                    // Find column indices based on headers
+                    var headers = ['Title', 'Summary', 'Authors', 'Published Date', 'DOI', 'Venue'];
+                    var columnIndices = {};
+
+                    for (var col in sheet) {
+                        var cell = sheet[col];
+                        if (cell.v !== undefined && cell.t === 's') {
+                            var headerIndex = headers.indexOf(cell.v.trim());
+                            if (headerIndex !== -1) {
+                                columnIndices[headers[headerIndex]] = col.replace(/[0-9]/g, '');
+                            }
+                        }
+                    }
+
+                    // Extract relevant data from the sheet based on column indices
+                    var title = columnIndices['Title'] ? sheet[columnIndices['Title']].v : '';
+                    var authorCell = columnIndices['Authors'] ? sheet[columnIndices['Authors']] : '';
+                    var authors = '';
+
+                    if (authorCell && authorCell.richText) {
+                        authors = authorCell.richText.map(rt => rt.text).join(', ');
+                    } else if (authorCell && authorCell.v !== undefined) {
+                        authors = authorCell.v;
+                    }
+
+                    var venue = columnIndices['Venue'] ? sheet[columnIndices['Venue']].v : '';
+                    var publishedDate = columnIndices['Published Date'] ? sheet[columnIndices['Published Date']].v : '';
+                    var doi = columnIndices['DOI'] ? sheet[columnIndices['DOI']].v : '';
+
+                    // Log the extracted data to the console for debugging
+                    console.log('Title:', title);
+                    console.log('Authors:', authors);
+                    console.log('Venue:', venue);
+                    console.log('Published Date:', publishedDate);
+                    console.log('DOI/URL:', doi);
+
+                    // Update the form fields
+                    document.getElementById('title').value = title;
+                    document.getElementById('author').value = authors;
+                    document.getElementById('journal').value = venue;
+                    document.getElementById('year').value = publishedDate;
+                    document.getElementById('doi').value = doi;
+
+                    // Trigger the citation conversion
+                    convert();
+                };
+
+                reader.readAsArrayBuffer(file);
+            } else {
+                alert('Please select an Excel file.');
+            }
+        }
+
+        // change Theme
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check the user's preference from localStorage
+            const userPrefersDark = localStorage.getItem("theme") === "dark";
+
+            // Apply the initial theme based on user preference
+            toggleTheme(userPrefersDark);
+
+            // Add an event listener to the theme toggle button
+            document.getElementById("themeToggle").addEventListener("click", function () {
+                // Toggle the theme and save the user's preference to localStorage
+                const isDarkMode = document.body.classList.toggle("dark-mode");
+                localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+            });
+        });
+
+        // Function to toggle the theme based on user preference
+        function toggleTheme(isDarkMode) {
+            document.body.classList.toggle("dark-mode", isDarkMode);
+        }
+        
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/b49f5c3996.js" crossorigin="anonymous"></script>
+
+</body>
+
+</html>

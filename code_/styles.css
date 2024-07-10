@@ -1,0 +1,36 @@
+.buttons{
+    padding-top: 2vw;
+}
+
+.button{
+    padding-bottom: 0.30vw;
+}
+
+.main_content{
+    padding-top: 2vw;
+}
+
+
+/* Light Mode Styles */
+body.light-mode {
+    background-color: #fff;
+    color: #000;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: #333;
+    color: #fff;
+}
+
+/* Add styles for the dark mode sidebar */
+body.dark-mode #sidebar {
+    background-color: #333; 
+    color: #fff;
+}
+
+#themeToggle{
+    margin: 0.3vw;
+    /* padding: .5vw; */
+    height: 2vw;
+}

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="styles.css">
+    <title>Original Article</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand " href="#"><i class="fa-sharp fa-regular fa-newspaper" ></i> RMS</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class=" collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="citation.html">Citation</a></li>
+                </ul>
+            </div>
+
+
+
+            <!-- Move the toggle theme button to the right -->
+            <form class="d-flex ms-auto" role="search">
+                <button id="themeToggle" class="btn btn-dark"><i class='bx bx-sun'></i>/<i
+                        class='bx bx-moon'></i></button>
+            </form>
+
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav id="sidebar" class="col-sm-3 col-lg-2 d-md-block length">
+                <div class="position-sticky">
+                    <ul class="nav flex-column buttons color">
+                        <li class="nav-item button">
+                            <button id="latestArticlesButton" class="btn btn-primary ms-5">Latest Articles <i class='bx bx-time-five' ></i></button>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-sm-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="text-center main_content">
+                    <h1 id="dynamic" class="text">Search for any Article</h1>
+                    <div class="input-group mb-3 ">
+                        <input id="searchInput" type="text" class="form-control ms-5" placeholder="Type here...">
+                        <button id="searchButton" class="btn btn-primary me-5">Search<i
+                                class='bx bxs-file-find'></i></button>
+                    </div>
+                </div>
+
+                <div id="loadingSpinner" class="text-center d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+                <div id="articleList" class="row mt-4">
+                    <!-- Articles will be displayed here -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("latestArticlesButton").addEventListener("click", () => {
+            fetchLatestArticles();
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>// Change theme javaScript
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check the user's preference from localStorage
+            const userPrefersDark = localStorage.getItem("theme") === "dark";
+
+            // Apply the initial theme based on user preference
+            toggleTheme(userPrefersDark);
+
+            // Add an event listener to the theme toggle button
+            document.getElementById("themeToggle").addEventListener("click", function () {
+                // Toggle the theme and save the user's preference to localStorage
+                const isDarkMode = document.body.classList.toggle("dark-mode");
+                localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+            });
+        });
+
+        // Function to toggle the theme based on user preference
+        function toggleTheme(isDarkMode) {
+            document.body.classList.toggle("dark-mode", isDarkMode);
+        }
+        // You can also add code to detect user's system preferences and automatically apply the theme
+
+        // For enter button
+        document.addEventListener('keydown', function (event) {
+            const keyCode = event.keyCode || event.which;
+
+            // Check if the pressed key is Enter (keyCode 13)
+            if (keyCode === 13) {
+                const clickButton = document.getElementById('searchButton');
+
+                // Check if the button exists before trying to click it
+                if (clickButton) {
+                    clickButton.click();
+                }
+            }
+        });
+
+
+        // Add an event listener to the search button
+        document.getElementById("searchButton").addEventListener("click", () => {
+            const searchInput = document.getElementById("searchInput");
+            const loadingSpinner = document.getElementById("loadingSpinner");
+
+            const input = searchInput.value;
+
+            if (input) {
+                loadingSpinner.classList.remove("d-none");
+
+                // Construct the API URL for arXiv based on the user's input
+                const apiUrl = `https://export.arxiv.org/api/query?search_query=all:${input}`;
+
+                fetch(apiUrl)
+                    .then(response => response.text())
+                    .then(data => {
+                        loadingSpinner.classList.add("d-none");
+
+                        // Parse the XML response (you may want to use a library for this)
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(data, "text/xml");
+                        const entries = xmlDoc.querySelectorAll("entry");
+
+                        const articles = Array.from(entries).map(entry => {
+                            const publishedDateElement = entry.querySelector("published");
+                            if (publishedDateElement) {
+                                const publishedDate = new Date(publishedDateElement.textContent).toLocaleDateString();
+
+                                // Collect all author names
+                                const authors = Array.from(entry.querySelectorAll("author")).map(author => author.textContent);
+
+                                // Get the DOI or display 'DOI not available'
+                                const doiElement = entry.querySelector("doi");
+                                const doi = doiElement ? doiElement.textContent : 'DOI not available';
+
+                                // Get the published venue or display 'Venue not available'
+                                const venueElement = entry.querySelector("journal_ref");
+                                const venue = venueElement ? venueElement.textContent : 'Venue not available';
+
+                                return {
+                                    title: entry.querySelector("title").textContent,
+                                    summary: entry.querySelector("summary").textContent,
+                                    authors: authors,
+                                    pdfLink: entry.querySelector("link[title='pdf']").getAttribute("href"),
+                                    publishedDate: publishedDate,
+                                    doi: doi,
+                                    venue: venue, // Add the venue to the article object
+                                };
+                            } else {
+                                console.warn('Published Date not found in entry:', entry);
+                                return null; // Skip this entry if the published date is not found
+                            }
+                        }).filter(article => article !== null);
+
+                        displayArticles(articles);
+                    })
+                    .catch(error => {
+                        loadingSpinner.classList.add("d-none");
+                        console.error("Error:", error);
+                    });
+            }
+        });
+
+        // Function to fetch and display the latest articles
+        function fetchLatestArticles() {
+            const loadingSpinner = document.getElementById("loadingSpinner");
+            loadingSpinner.classList.remove("d-none");
+
+            // Construct the API URL for arXiv to get the latest articles
+            const apiUrl = `https://export.arxiv.org/api/query?search_query=all&sortBy=submittedDate&sortOrder=descending`;
+
+            fetch(apiUrl)
+                .then(response => response.text())
+                .then(data => {
+                    loadingSpinner.classList.add("d-none");
+
+                    // Parse the XML response (you may want to use a library for this)
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data, "text/xml");
+                    const entries = xmlDoc.querySelectorAll("entry");
+
+                    const articles = Array.from(entries).map(entry => {
+                        const publishedDateElement = entry.querySelector("published");
+                        if (publishedDateElement) {
+                            const publishedDate = new Date(publishedDateElement.textContent).toLocaleDateString();
+
+                            // Collect all author names
+                            const authors = Array.from(entry.querySelectorAll("author")).map(author => author.textContent);
+
+                            // Get the DOI or display 'DOI not available'
+                            const doiElement = entry.querySelector("doi");
+                            const doi = doiElement ? doiElement.textContent : 'DOI not available';
+
+                            // Get the published venue or display 'Venue not available'
+                            const venueElement = entry.querySelector("journal_ref");
+                            const venue = venueElement ? venueElement.textContent : 'Venue not available';
+
+                            return {
+                                title: entry.querySelector("title").textContent,
+                                summary: entry.querySelector("summary").textContent,
+                                authors: authors,
+                                pdfLink: entry.querySelector("link[title='pdf']").getAttribute("href"),
+                                publishedDate: publishedDate,
+                                doi: doi,
+                                venue: venue, // Add the venue to the article object
+                            };
+                        } else {
+                            console.warn('Published Date not found in entry:', entry);
+                            return null; // Skip this entry if the published date is not found
+                        }
+                    }).filter(article => article !== null);
+
+                    displayArticles(articles);
+                })
+                .catch(error => {
+                    loadingSpinner.classList.add("d-none");
+                    console.error("Error:", error);
+                });
+        }
+
+        // Function to display articles
+        function displayArticles(articles) {
+            const articleList = document.getElementById("articleList");
+
+            // Clear previous results
+            articleList.innerHTML = "";
+
+            // Loop through articles and create HTML elements to display them
+            articles.forEach(article => {
+                const articleDiv = document.createElement("div");
+                articleDiv.className = "col-md-12";
+                articleDiv.innerHTML = `
+                    <h4 style="color: blue">TITLE: ${article.title}</h4>
+                    <p>SUMMARY: ${article.summary}</p>
+        
+                    <!-- <p>AUTHORS: ${article.authors.join(', ')}</p> -->
+                    <!-- <p>DOI: ${article.doi}</p>  Display the DOI -->
+                    <!-- <p>Venue: ${article.venue}</p>  Display the Venue -->
+                    
+                    <a href="${article.pdfLink}" class="btn btn-danger" target="_blank" download><i class='bx bxs-download'></i> PDF</a>
+                    <a href="metadata.html?title=${encodeURIComponent(article.title)}&summary=${encodeURIComponent(article.summary)}&authors=${encodeURIComponent(article.authors.join(', '))}&publishedDate=${encodeURIComponent(article.publishedDate)}&doi=${encodeURIComponent(article.doi)}&venue=${encodeURIComponent(article.venue)}" class="btn btn-primary"><i class="fa-sharp fa-regular fa-eye"></i> view Metadata</a>
+                    <br><br><br><br>
+                    <!-- Add other properties you want to display -->
+                `;
+                articleList.appendChild(articleDiv);
+            });
+        }
+
+    </script>
+    <!-- <script src="scripts.js"></script> -->
+    <!-- Font ausome kit -->
+    <script src="https://kit.fontawesome.com/b49f5c3996.js" crossorigin="anonymous"></script>
+    <script src="dynamic.js"></script>
+</body>
+
+</html>
